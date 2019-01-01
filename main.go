@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"io/ioutil"
 	"log"
@@ -29,11 +30,20 @@ type userInfo struct {
 	Name string `json:"name"`
 }
 
+type message struct {
+	User    string
+	Comment string
+}
+
+var timeline []message
+
 type chatTemplateSource struct {
-	User string
+	User     string
+	Messages []message
 }
 
 func root(w http.ResponseWriter, r *http.Request) {
+	fmt.Print(r.Method)
 	c, err := r.Cookie("SESSION")
 	if err != nil {
 		http.Redirect(w, r, "/login", http.StatusFound)
@@ -46,7 +56,8 @@ func root(w http.ResponseWriter, r *http.Request) {
 	}
 	t, _ := template.ParseFiles("chat.html")
 	s := chatTemplateSource{
-		User: user,
+		User:     user,
+		Messages: timeline,
 	}
 	t.Execute(w, s)
 }
@@ -93,9 +104,33 @@ func callback(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusFound)
 }
 
+func chat(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "POST" {
+		s, err := r.Cookie("SESSION")
+		if err != nil {
+			http.Redirect(w, r, "/login", http.StatusFound)
+			return
+		}
+		user := sessions[s.Value]
+		if user == "" {
+			http.Redirect(w, r, "/login", http.StatusFound)
+			return
+		}
+		c := r.FormValue("chat")
+		m := message{
+			User:    user,
+			Comment: c,
+		}
+		timeline = append(timeline, m)
+	}
+	fmt.Print("call chat")
+	http.Redirect(w, r, "/", http.StatusFound)
+}
+
 func main() {
 	http.HandleFunc("/", root)
 	http.HandleFunc("/login", login)
 	http.HandleFunc("/callback", callback)
+	http.HandleFunc("/chat", chat)
 	http.ListenAndServe(":8080", nil)
 }
