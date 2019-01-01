@@ -30,7 +30,17 @@ type userInfo struct {
 }
 
 func root(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "Hello World.")
+	c, err := r.Cookie("SESSION")
+	if err != nil {
+		http.Redirect(w, r, "/login", http.StatusFound)
+		return
+	}
+	user := sessions[c.Value]
+	if user == "" {
+		http.Redirect(w, r, "/login", http.StatusFound)
+		return
+	}
+	fmt.Fprintf(w, "Hello %s!", user)
 }
 
 func login(w http.ResponseWriter, r *http.Request) {
@@ -72,7 +82,7 @@ func callback(w http.ResponseWriter, r *http.Request) {
 		Value: session,
 	}
 	http.SetCookie(w, c)
-	fmt.Fprintf(w, "Hello %s!", user.Name)
+	http.Redirect(w, r, "/", http.StatusFound)
 }
 
 func main() {
