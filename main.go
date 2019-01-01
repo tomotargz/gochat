@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"html/template"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -29,6 +29,10 @@ type userInfo struct {
 	Name string `json:"name"`
 }
 
+type chatTemplateSource struct {
+	User string
+}
+
 func root(w http.ResponseWriter, r *http.Request) {
 	c, err := r.Cookie("SESSION")
 	if err != nil {
@@ -40,7 +44,11 @@ func root(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/login", http.StatusFound)
 		return
 	}
-	fmt.Fprintf(w, "Hello %s!", user)
+	t, _ := template.ParseFiles("chat.html")
+	s := chatTemplateSource{
+		User: user,
+	}
+	t.Execute(w, s)
 }
 
 func login(w http.ResponseWriter, r *http.Request) {
