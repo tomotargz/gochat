@@ -8,10 +8,14 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
+	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 )
+
+var sessions = make(map[string]string)
 
 var oauth2Conf = oauth2.Config{
 	ClientID:     os.Getenv("GOCHAT_CLIENT_ID"),
@@ -34,6 +38,17 @@ func login(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, url, http.StatusFound)
 }
 
+func generateHash(s string) string {
+	b, err := bcrypt.GenerateFromPassword([]byte(s), bcrypt.DefaultCost)
+	if err != nil {
+		log.Fatal(err)
+	}
+	e := strings.Split(string(b), "$")
+	saltAndHash := e[len(e)-1]
+	hash := string([]rune(saltAndHash)[22:])
+	return hash
+}
+
 func callback(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	code := r.URL.Query().Get("code")
@@ -50,6 +65,13 @@ func callback(w http.ResponseWriter, r *http.Request) {
 	byteArray, err := ioutil.ReadAll(res.Body)
 	user := userInfo{}
 	json.Unmarshal(byteArray, &user)
+	session := generateHash(user.Name)
+	sessions[session] = user.Name
+	c := &http.Cookie{
+		Name:  "SESSION",
+		Value: session,
+	}
+	http.SetCookie(w, c)
 	fmt.Fprintf(w, "Hello %s!", user.Name)
 }
 
