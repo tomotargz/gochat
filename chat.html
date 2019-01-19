@@ -6,13 +6,36 @@
     <body>
         <h2>Gochat</h2>
         Hello {{.User}}!
-        <form action="/chat" method="post">
-            <input type="text" name="chat">
-            <input type="submit" value="Submit">
+        <form id="form">
+            <input type="text" id="msg" size="64">
+            <input type="submit" value="Send">
         </form>
-        <br>
-        {{range .Messages}}
-        {{.User}}: {{.Comment}}<br>
-        {{end}}
+        <div id="log"></div>
+        <script type="text/javascript">
+            var msg = document.getElementById("msg");
+            var log = document.getElementById("log");
+            var conn;
+
+            document.getElementById("form").onsubmit = function () {
+                if (!conn) {
+                    return false;
+                }
+                if (!msg.value) {
+                    return false;
+                }
+                conn.send(msg.value);
+                msg.value = "";
+                return false;
+            };
+
+            window.onload = function(){
+                conn = new WebSocket("ws://" + document.location.host + "/ws");
+                conn.onmessage = function(evt){
+                    var item = document.createElement("div");
+                    item.innerText = evt;
+                    log.insertItemAt(0, item);
+                }
+            }
+        </script>
     </body>
 </html>
