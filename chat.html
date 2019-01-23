@@ -32,8 +32,8 @@
                 conn = new WebSocket("ws://" + document.location.host + "/ws");
                 conn.onmessage = function(evt){
                     var item = document.createElement("div");
-                    item.innerText = evt;
-                    log.insertItemAt(0, item);
+                    item.innerText = evt.data;
+                    log.insertBefore(item, log.firstChild);
                 }
             }
         </script>

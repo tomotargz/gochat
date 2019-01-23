@@ -42,13 +42,7 @@ type chatTemplateSource struct {
 }
 
 func root(w http.ResponseWriter, r *http.Request) {
-	s, err := r.Cookie("SESSION")
-	if err != nil {
-		http.Redirect(w, r, oauth2Conf.AuthCodeURL("state"), http.StatusFound)
-		return
-	}
-
-	user, ok := sessions[s.Value]
+	name, ok := auth(r)
 	if !ok {
 		http.Redirect(w, r, oauth2Conf.AuthCodeURL("state"), http.StatusFound)
 		return
@@ -57,7 +51,7 @@ func root(w http.ResponseWriter, r *http.Request) {
 	t, _ := template.ParseFiles("chat.html")
 
 	source := chatTemplateSource{
-		User:     user,
+		User:     name,
 		Messages: timeline,
 	}
 	t.Execute(w, source)
@@ -103,6 +97,8 @@ func callback(w http.ResponseWriter, r *http.Request) {
 func main() {
 	http.HandleFunc("/", root)
 	http.HandleFunc("/callback", callback)
-	// http.HandleFunc("/ws")
+	room := newRoom()
+	go room.run()
+	http.Handle("/ws", room)
 	http.ListenAndServe(":8080", nil)
 }
