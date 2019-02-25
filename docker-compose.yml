@@ -1,0 +1,14 @@
+version: '3'
+services:
+    web:
+        build: .
+        environment:
+            - GOCHAT_CLIENT_ID=${GOCHAT_CLIENT_ID}
+            - GOCHAT_CLIENT_SECRET=${GOCHAT_CLIENT_SECRET}
+        ports:
+            - "8080:8080"
+
+    mysql:
+        image: "mysql:latest"
+        environment:
+            MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
