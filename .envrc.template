@@ -1,0 +1,2 @@
+export GOCHAT_CLIENT_ID="{replace me}"
+export GOCHAT_CLIENT_SECRET="{replace me}"
